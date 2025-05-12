@@ -331,17 +331,13 @@ app.post('/auth/refresh', async (req, res) => {
 });
 
 // Logout endpoint
-app.post('/auth/logout', verifyToken, async (req, res) => {
+app.post('/auth/logout', async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken) {
     return res.status(400).json({ error: 'No refresh token provided' });
   }
   try {
-    // Delete the refresh token from the database
-    await pool.query(
-      'DELETE FROM refresh_tokens WHERE token = $1',
-      [refreshToken]
-    );
+    await pool.query('DELETE FROM refresh_tokens WHERE token = $1', [refreshToken]);
     res.json({ message: 'Logged out successfully' });
   } catch (err) {
     console.error('Logout error:', err);
@@ -401,6 +397,45 @@ app.post('/messages', verifyToken, async (req, res) => {
   } catch (err) {
     console.error('Message error:', err);
     res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// Get provider's projects
+app.get('/projects', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId; // Use req.user.userId from verifyToken
+    const provider = await pool.query('SELECT id FROM providers WHERE user_id = $1', [userId]);
+    if (provider.rows.length === 0) {
+      return res.status(403).json({ error: 'User is not a provider' });
+    }
+    const providerId = provider.rows[0].id;
+    const result = await pool.query(
+      'SELECT p.*, u.email AS user_email FROM projects p JOIN users u ON p.user_id = u.id WHERE p.provider_id = $1',
+      [providerId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Projects error:', err);
+    res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+});
+
+// Get provider's received messages
+app.get('/messages/provider', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId; // Use req.user.userId from verifyToken
+    const result = await pool.query(
+      'SELECT m.*, u.email AS sender_email, p.title AS project_title ' +
+      'FROM messages m ' +
+      'JOIN users u ON m.sender_id = u.id ' +
+      'LEFT JOIN projects p ON m.project_id = p.id ' +
+      'WHERE m.receiver_id = $1',
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Messages error:', err);
+    res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
 
