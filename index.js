@@ -289,6 +289,18 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
+// Get current user info
+app.get('/auth/me', verifyToken, async (req, res) => {
+  try {
+    const user = await pool.query('SELECT id, email, role FROM users WHERE id = $1', [req.user.userId]);
+    if (user.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    res.json(user.rows[0]);
+  } catch (err) {
+    console.error('Auth/me error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Refresh token endpoint
 app.post('/auth/refresh', async (req, res) => {
   const { refreshToken } = req.body;
