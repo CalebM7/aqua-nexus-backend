@@ -90,6 +90,8 @@ const initializeDatabase = async () => {
           service_type VARCHAR(50) CHECK (service_type IN ('rwh', 'borehole')),
           location GEOMETRY(POINT, 4326),
           budget NUMERIC,
+          provider_id INT REFERENCES providers(id),
+          status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
           created_at TIMESTAMP DEFAULT NOW()
         )`);
 
@@ -98,12 +100,13 @@ const initializeDatabase = async () => {
         CREATE TABLE IF NOT EXISTS bids (
           id SERIAL PRIMARY KEY,
           project_id INT REFERENCES projects(id),
-          provider_id INT REFERENCES users(id),
+          provider_id INT REFERENCES providers(id),
           amount NUMERIC NOT NULL,
+          description TEXT,
           status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
           created_at TIMESTAMP DEFAULT NOW()
         )`);
-
+        
       console.log('Creating providers table');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS providers (
@@ -435,19 +438,64 @@ app.get('/projects', verifyToken, async (req, res) => {
 // Get provider's received messages
 app.get('/messages/provider', verifyToken, async (req, res) => {
   try {
-    const userId = req.user.userId; // Use req.user.userId from verifyToken
+    const userId = req.user.userId;
     const result = await pool.query(
       'SELECT m.*, u.email AS sender_email, p.title AS project_title ' +
       'FROM messages m ' +
       'JOIN users u ON m.sender_id = u.id ' +
       'LEFT JOIN projects p ON m.project_id = p.id ' +
-      'WHERE m.receiver_id = $1',
+      'WHERE m.receiver_id = $1 AND m.sender_id != m.receiver_id ' +
+      'ORDER BY m.created_at DESC',
       [userId]
     );
     res.json(result.rows);
   } catch (err) {
     console.error('Messages error:', err);
     res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Reply to a message
+app.post('/messages/reply', verifyToken, async (req, res) => {
+  const { content, receiver_id, project_id } = req.body;
+  const sender_id = req.user.userId;
+  try {
+    if (!content || !receiver_id) {
+      return res.status(400).json({ error: 'Missing content or receiver_id' });
+    }
+    const message = await pool.query(
+      'INSERT INTO messages (sender_id, receiver_id, project_id, content, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *',
+      [sender_id, receiver_id, project_id || null, content]
+    );
+    res.status(201).json(message.rows[0]);
+  } catch (err) {
+    console.error('Reply error:', err);
+    res.status(500).json({ error: 'Failed to send reply' });
+  }
+});
+
+// Submit a bid
+app.post('/bids', verifyToken, async (req, res) => {
+  const { project_id, amount, description } = req.body;
+  const userId = req.user.userId;
+  try {
+    if (!project_id || !amount) {
+      return res.status(400).json({ error: 'Missing project_id or amount' });
+    }
+    // Get provider_id from providers table
+    const provider = await pool.query('SELECT id FROM providers WHERE user_id = $1', [userId]);
+    if (provider.rows.length === 0) {
+      return res.status(403).json({ error: 'User is not a provider' });
+    }
+    const providerId = provider.rows[0].id;
+    const bid = await pool.query(
+      'INSERT INTO bids (project_id, provider_id, amount, description, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *',
+      [project_id, providerId, amount, description || null]
+    );
+    res.json(bid.rows[0]);
+  } catch (err) {
+    console.error('Bid error:', err);
+    res.status(500).json({ error: 'Failed to submit bid' });
   }
 });
 
