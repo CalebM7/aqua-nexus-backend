@@ -43,7 +43,7 @@ router.post('/signup', async (req, res) => {
 
     console.log('Generating tokens for user:', user.id);
     const accessToken = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    const refreshToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const refreshToken = jwt.sign({ userId: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     console.log('Storing refresh token for user:', user.id);
@@ -106,7 +106,7 @@ router.post('/login', async (req, res) => {
     );
     const refreshToken = jwt.sign(
       { userId: user.id },
-      process.env.JWT_SECRET,
+      process.env.JWT_REFRESH_SECRET,
       { expiresIn: '7d' }
     );
 
@@ -243,18 +243,19 @@ router.post('/refresh', async (req, res) => {
       await pool.query('DELETE FROM refresh_tokens WHERE token = $1', [refreshToken]);
       return res.status(403).json({ error: 'Refresh token expired' });
     }
-    const userResult = await pool.query('SELECT role FROM users WHERE id = $1', [storedToken.user_id]);
+    const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const userResult = await pool.query('SELECT role FROM users WHERE id = $1', [payload.userId]);
     if (userResult.rows.length === 0) {
       console.log('User not found for refresh token');
       return res.status(404).json({ error: 'User not found for refresh token' });
     }
     const userRole = userResult.rows[0].role;
     const newAccessToken = jwt.sign(
-      { userId: storedToken.user_id, role: userRole },
+      { userId: payload.userId, role: userRole },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
-    console.log('Token refreshed for user:', storedToken.user_id);
+    console.log('Token refreshed for user:', payload.userId);
     res.json({ accessToken: newAccessToken });
   } catch (err) {
     console.error('Refresh token error:', {
@@ -263,7 +264,7 @@ router.post('/refresh', async (req, res) => {
       detail: err.detail,
       stack: err.stack,
     });
-    res.status(500).json({ error: 'Server error during token refresh' });
+    res.status(403).json({ error: 'Invalid refresh token' });
   }
 });
 

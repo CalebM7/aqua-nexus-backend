@@ -48,6 +48,12 @@ app.use('/bids', bidRoutes);
 app.use('/reviews', reviewRoutes);
 app.use('/messages', messageRoutes);
 
+// Catch-all for unhandled routes
+app.use((req, res) => {
+  console.log('Unhandled route:', req.method, req.url);
+  res.status(404).json({ error: 'Route not found' });
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
