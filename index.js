@@ -1,33 +1,36 @@
 const express = require("express");
+const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
-const dotenv = require("dotenv");
-const initializeDatabase = require("./db/init");
-const authRoutes = require("./routes/auth");
-const providerRoutes = require("./routes/providers");
-const projectRoutes = require("./routes/projects");
-const bidRoutes = require("./routes/bids");
-const reviewRoutes = require("./routes/reviews");
-const messageRoutes = require("./routes/messages");
+const multer = require("multer");
 
 dotenv.config();
+
+const { initializeDatabase } = require("./src/database/config");
+const { testDB } = require("./src/controllers/test-db");
+const { authRouter } = require("./src/router/authRouter");
+const { providerRouter } = require("./src/router/providerRouter");
+const { projectRouter } = require("./src/router/projectRouter");
+const { bidRouter } = require("./src/router/bidRouter");
+const { reviewRouter } = require("./src/router/reviewRouter");
+const { messageRouter } = require("./src/router/messageRouter");
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 // CORS configuration
-const corsOptions = {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_URL
-      : "http://localhost:5173",
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? process.env.FRONTEND_URL
+        : "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
-// Middleware
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "Uploads")));
 app.use("/images", express.static(path.join(__dirname, "public/images")));
@@ -38,28 +41,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
+// Basic route
 app.get("/", (req, res) => {
   res.send("AquaNexus Backend is Running 🚀");
 });
 
-app.get("/api/test-db", async (req, res) => {
-  try {
-    const pool = require("./db/pool");
-    const result = await pool.query("SELECT NOW()");
-    res.json({ message: "Database connected", time: result.rows[0].now });
-  } catch (err) {
-    console.error("Database query error:", err.message);
-    res.status(500).json({ error: "Database connection failed" });
-  }
-});
+// Test database route
+app.get("/api/test-db", testDB);
 
-app.use("/auth", authRoutes);
-app.use("/providers", providerRoutes);
-app.use("/projects", projectRoutes);
-app.use("/bids", bidRoutes);
-app.use("/reviews", reviewRoutes);
-app.use("/messages", messageRoutes);
+// Routers
+app.use("/auth", authRouter);
+app.use("/providers", providerRouter);
+app.use("/projects", projectRouter);
+app.use("/bids", bidRouter);
+app.use("/reviews", reviewRouter);
+app.use("/messages", messageRouter);
 
 // Catch-all for unhandled routes
 app.use((req, res) => {
