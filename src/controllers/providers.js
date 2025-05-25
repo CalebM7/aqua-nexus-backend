@@ -1,19 +1,44 @@
-const { pool } = require("../database/config");
+// src/controllers/providers.js
+const { pool } = require('../database/config');
 
-// Get all providers (public)
+// Get all providers with filters (public)
 const getAllProviders = async (req, res) => {
+  const { location, service_type, min_rating } = req.query;
+
   try {
-    const result = await pool.query(`
+    let query = `
       SELECT p.id, p.user_id, p.name, p.service_type, p.description, p.price_range_min,
              p.price_range_max, p.service_areas, p.services, p.image, p.certifications,
              p.rating, COUNT(r.id) as reviews
       FROM providers p
       LEFT JOIN reviews r ON p.id = r.provider_id
-      GROUP BY p.id
-    `);
+      WHERE 1=1`;
+    const params = [];
+
+    if (location) {
+      params.push(location);
+      query += ` AND $${params.length} = ANY(p.service_areas)`;
+    }
+    if (service_type) {
+      params.push(service_type);
+      query += ` AND $${params.length} = ANY(p.services)`;
+    }
+    if (min_rating) {
+      const rating = parseFloat(min_rating);
+      if (isNaN(rating)) {
+        return res.status(400).json({ error: 'min_rating must be a number' });
+      }
+      params.push(rating);
+      query += ` AND (p.rating >= $${params.length} OR p.rating IS NULL)`;
+    }
+
+    query += ` GROUP BY p.id`;
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch providers" });
+    console.error('Error fetching providers:', err);
+    res.status(500).json({ error: 'Failed to fetch providers' });
   }
 };
 
@@ -34,11 +59,12 @@ const getProviderById = async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Provider not found" });
+      return res.status(404).json({ error: 'Provider not found' });
     }
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch provider" });
+    console.error('Error fetching provider:', err);
+    res.status(500).json({ error: 'Failed to fetch provider' });
   }
 };
 
@@ -76,11 +102,12 @@ const updateProvider = async (req, res) => {
       ]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Provider not found" });
+      return res.status(404).json({ error: 'Provider not found' });
     }
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: "Failed to update provider" });
+    console.error('Error updating provider:', err);
+    res.status(500).json({ error: 'Failed to update provider' });
   }
 };
 

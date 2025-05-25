@@ -14,6 +14,7 @@ const { projectRouter } = require("./src/router/projectRouter");
 const { bidRouter } = require("./src/router/bidRouter");
 const { reviewRouter } = require("./src/router/reviewRouter");
 const { messageRouter } = require("./src/router/messageRouter");
+const { notificationRouter } = require("./src/router/notificationRouter"); // Add this
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -41,21 +42,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Basic route
+// Routes
 app.get("/", (req, res) => {
   res.send("AquaNexus Backend is Running 🚀");
 });
-
-// Test database route
 app.get("/api/test-db", testDB);
-
-// Routers
 app.use("/auth", authRouter);
 app.use("/providers", providerRouter);
 app.use("/projects", projectRouter);
 app.use("/bids", bidRouter);
 app.use("/reviews", reviewRouter);
 app.use("/messages", messageRouter);
+app.use("/notifications", notificationRouter); // Add this
 
 // Catch-all for unhandled routes
 app.use((req, res) => {

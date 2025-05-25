@@ -1,5 +1,5 @@
-const { Pool } = require("pg");
-const dotenv = require("dotenv");
+const { Pool } = require('pg');
+const dotenv = require('dotenv');
 dotenv.config();
 
 const pool = new Pool({
@@ -15,17 +15,14 @@ const initializeDatabase = async () => {
   while (attempt <= maxRetries) {
     try {
       console.log(`Attempt ${attempt} to connect to database...`);
-      // 1. Test database connection
-      const connection = await pool.query("SELECT NOW()");
-      console.log("✅ Database connected at:", connection.rows[0].now);
+      const connection = await pool.query('SELECT NOW()');
+      console.log('✅ Database connected at:', connection.rows[0].now);
 
-      // 2. Enable PostGIS extension
-      await pool.query("CREATE EXTENSION IF NOT EXISTS postgis");
-      const postgisCheck = await pool.query("SELECT postgis_version()");
-      console.log("✅ PostGIS enabled:", postgisCheck.rows[0].postgis_version);
+      await pool.query('CREATE EXTENSION IF NOT EXISTS postgis');
+      const postgisCheck = await pool.query('SELECT postgis_version()');
+      console.log('✅ PostGIS enabled:', postgisCheck.rows[0].postgis_version);
 
-      // 3. Create tables
-      console.log("Creating users table");
+      console.log('Creating users table');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
@@ -35,16 +32,16 @@ const initializeDatabase = async () => {
           phone VARCHAR(20),
           created_at TIMESTAMP DEFAULT NOW()
         )`);
-      console.log("✅ Users table created");
+      console.log('✅ Users table created');
 
-      console.log("Creating providers table");
+      console.log('Creating providers table');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS providers (
           id SERIAL PRIMARY KEY,
           user_id INT REFERENCES users(id),
           name VARCHAR(255) NOT NULL,
           certifications JSONB,
-          services JSONB,
+          services TEXT[] DEFAULT '{}',
           rating NUMERIC,
           location GEOMETRY(POINT, 4326),
           created_at TIMESTAMP DEFAULT NOW(),
@@ -58,9 +55,9 @@ const initializeDatabase = async () => {
           reviews INTEGER DEFAULT 0,
           UNIQUE(user_id)
         )`);
-      console.log("✅ Providers table created");
+      console.log('✅ Providers table created');
 
-      console.log("Creating projects table");
+      console.log('Creating projects table');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS projects (
           id SERIAL PRIMARY KEY,
@@ -72,33 +69,34 @@ const initializeDatabase = async () => {
           budget NUMERIC,
           created_at TIMESTAMP DEFAULT NOW()
         )`);
-      console.log("✅ Projects table created");
+      console.log('✅ Projects table created');
 
-      console.log("Creating bids table");
+      console.log('Creating bids table');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS bids (
           id SERIAL PRIMARY KEY,
           project_id INT REFERENCES projects(id),
-          provider_id INT REFERENCES users(id),
+          provider_id INT REFERENCES providers(id),
           amount NUMERIC NOT NULL,
           status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
-          created_at TIMESTAMP DEFAULT NOW()
+          created_at TIMESTAMP DEFAULT NOW(),
+          description TEXT
         )`);
-      console.log("✅ Bids table created");
+      console.log('✅ Bids table created');
 
-      console.log("Creating reviews table");
+      console.log('Creating reviews table');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS reviews (
           id SERIAL PRIMARY KEY,
-          provider_id INT REFERENCES users(id),
+          provider_id INT REFERENCES providers(id),
           user_id INT REFERENCES users(id),
           rating INT CHECK (rating BETWEEN 1 AND 5),
           comment TEXT,
           created_at TIMESTAMP DEFAULT NOW()
         )`);
-      console.log("✅ Reviews table created");
+      console.log('✅ Reviews table created');
 
-      console.log("Creating gallery_images table");
+      console.log('Creating gallery_images table');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS gallery_images (
           id SERIAL PRIMARY KEY,
@@ -107,9 +105,9 @@ const initializeDatabase = async () => {
           caption TEXT,
           created_at TIMESTAMP DEFAULT NOW()
         )`);
-      console.log("✅ Gallery_images table created");
+      console.log('✅ Gallery_images table created');
 
-      console.log("Creating messages table");
+      console.log('Creating messages table');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS messages (
           id SERIAL PRIMARY KEY,
@@ -119,9 +117,9 @@ const initializeDatabase = async () => {
           content TEXT NOT NULL,
           created_at TIMESTAMP DEFAULT NOW()
         )`);
-      console.log("✅ Messages table created");
+      console.log('✅ Messages table created');
 
-      console.log("Creating refresh_tokens table");
+      console.log('Creating refresh_tokens table');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS refresh_tokens (
           id SERIAL PRIMARY KEY,
@@ -131,20 +129,31 @@ const initializeDatabase = async () => {
           created_at TIMESTAMP DEFAULT NOW(),
           UNIQUE(user_id, token)
         )`);
-      console.log("✅ Refresh_tokens table created");
+      console.log('✅ Refresh_tokens table created');
 
-      console.log("✅ Tables created successfully");
-      break; // Exit loop on success
+      console.log('Creating notifications table');
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS notifications (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          type VARCHAR(20) NOT NULL CHECK (type IN ('bid', 'message', 'project')),
+          project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
+          message_id INTEGER REFERENCES messages(id) ON DELETE SET NULL,
+          read BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+      console.log('✅ Notifications table created');
+
+      console.log('✅ Tables created successfully');
+      break;
     } catch (err) {
       console.error(`❌ Attempt ${attempt} failed:`, err);
       if (attempt === maxRetries) {
-        console.error(
-          "❌ Max retries reached. Database initialization failed."
-        );
+        console.error('❌ Max retries reached. Database initialization failed.');
         return;
       }
       attempt++;
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
 };
