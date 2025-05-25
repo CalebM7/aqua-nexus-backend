@@ -33,8 +33,8 @@ const upload = multer({
 // Get all providers (public)
 router.get("/", getAllProviders);
 
-// Get provider by ID (authenticated)
-router.get("/:id", verifyToken, getProviderById);
+// Get provider by ID (public)
+router.get("/:id", getProviderById);
 
 // Update provider profile (authenticated)
 router.put("/:id", verifyToken, updateProvider);
