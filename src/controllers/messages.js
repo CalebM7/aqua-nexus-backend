@@ -1,16 +1,30 @@
-const { pool } = require("../database/config");
+const { pool } = require('../database/config');
 
-// Send a message to a provider
+// Send a message to a provider or user
 const messagesFunc = async (req, res) => {
-  const { providerId, content } = req.body;
+  let { providerId, receiver_id, content } = req.body;
   const senderId = req.user.userId;
   try {
-    if (!providerId || !content) {
-      return res.status(400).json({ error: 'Missing providerId or content' });
+    if (!content) {
+      return res.status(400).json({ error: 'Missing content' });
+    }
+    // If receiver_id is not provided but providerId is, look up user_id
+    if (!receiver_id && providerId) {
+      const providerRes = await pool.query(
+        'SELECT user_id FROM providers WHERE id = $1',
+        [providerId]
+      );
+      if (providerRes.rows.length === 0) {
+        return res.status(400).json({ error: 'Provider not found' });
+      }
+      receiver_id = providerRes.rows[0].user_id;
+    }
+    if (!receiver_id) {
+      return res.status(400).json({ error: 'Missing receiver_id' });
     }
     const result = await pool.query(
       'INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING *',
-      [senderId, providerId, content]
+      [senderId, receiver_id, content]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -23,7 +37,10 @@ const getProviderMessages = async (req, res) => {
   const userId = req.user.userId;
   try {
     // Find provider id for this user
-    const provider = await pool.query('SELECT id FROM providers WHERE user_id = $1', [userId]);
+    const provider = await pool.query(
+      'SELECT id FROM providers WHERE user_id = $1',
+      [userId]
+    );
     if (provider.rows.length === 0) {
       return res.status(403).json({ error: 'User is not a provider' });
     }
