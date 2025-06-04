@@ -1,0 +1,104 @@
+{
+  "faqs": [
+    {
+      "q": "How do I post a project?",
+      "a": "Sign up as a user, log in, and click 'Post a Project' on your dashboard. Fill in the project details and submit."
+    },
+    {
+      "q": "How are providers vetted?",
+      "a": "All providers go through a verification process, including certification checks and reviews from previous clients."
+    },
+    {
+      "q": "Is payment secure?",
+      "a": "Yes, all payments are handled securely through our platform, ensuring both client and provider protection."
+    },
+    {
+      "q": "Can I become a provider?",
+      "a": "Yes! Sign up as a provider, complete your profile, and start bidding on projects."
+    },
+    {
+      "q": "How do I accept a bid?",
+      "a": "Go to your dashboard, view your project bids, and click 'Accept' on the bid you want to approve."
+    },
+    {
+      "q": "How do I submit a bid as a provider?",
+      "a": "Log in as a provider, browse available projects, and click 'Submit Bid' to enter your offer and description."
+    },
+    {
+      "q": "How do I update my provider profile?",
+      "a": "Go to your provider dashboard and use the 'Update Profile' section to edit your details, services, and pricing."
+    },
+    {
+      "q": "How do I view my bid history?",
+      "a": "Providers can view all their submitted bids in the 'My Bids' section of the provider dashboard."
+    },
+    {
+      "q": "How do I contact support?",
+      "a": "You can email support@aquanexus.ke or use the contact form on the website for assistance."
+    },
+    {
+      "q": "What happens after I accept a bid?",
+      "a": "The provider will be notified, and you can communicate directly to arrange project details and payment."
+    },
+    {
+      "q": "Can I edit my project after posting?",
+      "a": "Currently, you cannot edit a project after posting. If you need changes, contact support."
+    },
+    {
+      "q": "How do I reset my password?",
+      "a": "Click 'Forgot Password' on the login page and follow the instructions sent to your email."
+    },
+    {
+      "q": "What services are available on AquaNexus?",
+      "a": "AquaNexus connects you with providers for rainwater harvesting and borehole drilling services."
+    },
+    {
+      "q": "How are payments handled?",
+      "a": "Payments are made securely through the platform after you hire a provider and agree on terms."
+    },
+    {
+      "q": "How do I become a verified provider?",
+      "a": "Sign up as a provider and upload your certifications. Our team will review and verify your credentials."
+    },
+    {
+      "q": "What is AquaNexus?",
+      "a": "AquaNexus is a web platform that connects Kenyan households, schools, institutions, and businesses with vetted rainwater harvesting installers and borehole drilling service providers. It is designed to be the central hub for reliable water solutions in Kenya."
+    },
+    {
+      "q": "What problem does AquaNexus solve?",
+      "a": "AquaNexus addresses Kenya's water crisis by bridging the gap between those seeking water solutions and certified providers. It tackles information gaps, reduces circumvention risk, and ensures accountability and transparency in water projects."
+    },
+    {
+      "q": "Who benefits from AquaNexus?",
+      "a": "Direct beneficiaries include households, schools, institutions, businesses, local rainwater harvesting installers, borehole drillers, and suppliers. Indirect beneficiaries include government agencies like the Ministry of Water, WRA, and NEMA."
+    },
+    {
+      "q": "How does the AquaNexus platform work?",
+      "a": "Users post their water project needs, vetted providers submit bids, users select a provider based on bids and profiles, payments are made securely via escrow, and the provider delivers the service. Payment is released after user confirmation."
+    },
+    {
+      "q": "What is the revenue model for AquaNexus?",
+      "a": "AquaNexus earns a commission on successful project bookings paid through the platform's escrow system. Additional revenue comes from premium provider listings, advertising, and premium user features."
+    },
+    {
+      "q": "What makes AquaNexus different from other platforms?",
+      "a": "AquaNexus is Kenya's first dedicated, end-to-end marketplace for rainwater harvesting and borehole drilling services, with a focus on trust, transparency, secure payments, and verified providers."
+    },
+    {
+      "q": "Is AquaNexus sustainable?",
+      "a": "Yes. AquaNexus is designed for long-term sustainability through value delivery, secure transactions, robust reviews, community building, and partnerships. Its commission-based model ensures financial viability."
+    },
+    {
+      "q": "Can AquaNexus scale beyond Kenya?",
+      "a": "Yes. The platform is designed to be transferable to other water-scarce regions, with localization and partnerships enabling expansion beyond Kenya."
+    },
+    {
+      "q": "What are the main features of AquaNexus?",
+      "a": "Key features include comprehensive provider profiles, project posting, bidding system, secure escrow payments, verified reviews and ratings, and in-platform messaging."
+    },
+    {
+      "q": "How do I get started with AquaNexus?",
+      "a": "Sign up as a user or provider, complete your profile, and start posting projects or bidding on available projects. Use the dashboard to manage your activities."
+    }
+  ]
+}
